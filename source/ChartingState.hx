@@ -272,6 +272,7 @@ class ChartingState extends MusicBeatState
 				stage: 'stage',
 				gf: 'gf',
 				speed: 1,
+				mania: 0,
 				validScore: false
 			};
 		}
@@ -402,6 +403,7 @@ class ChartingState extends MusicBeatState
 				stage: 'stage',
 				gf: 'gf',
 				speed: 1,
+				mania: 0,
 				validScore: false
 			};
 
@@ -1591,7 +1593,10 @@ class ChartingState extends MusicBeatState
 					if(daStrumTime 	== curSelectedNote[0] &&
 					daNoteInfo 	== curSelectedNote[1] &&
 					daSus 		== curSelectedNote[2]){
-						note.glow();
+						var frameN:Array<String> = ['purple', 'blue', 'green', 'red'];
+						if (note.mania == 1) frameN = ['purple', 'green', 'red', 'yellow', 'blue', 'dark'];
+						else if (note.mania == 2) frameN = ['purple', 'blue', 'green', 'red', 'white', 'yellow', 'violet', 'black', 'dark'];
+						note.animation.play(frameN[note.noteData % Main.keyAmmo[note.mania]] + 'glow');
 					}
 				}
 	

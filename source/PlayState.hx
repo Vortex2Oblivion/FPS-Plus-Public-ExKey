@@ -262,6 +262,9 @@ class PlayState extends MusicBeatState
 	public static var sectionStartTime:Float =  0;
 
 	private var meta:SongMetaTags;
+
+	public static var mania:Int = 0;
+	public static var keyAmmo:Array<Int> = [4, 6, 9];
 	
 	override public function create(){
 
@@ -294,6 +297,8 @@ class PlayState extends MusicBeatState
 
 		FlxG.sound.cache(Paths.inst(SONG.song));
 		FlxG.sound.cache(Paths.voices(SONG.song));
+
+		mania = SONG.mania;
 		
 		if(Config.noFpsCap)
 			openfl.Lib.current.stage.frameRate = 999;
@@ -1382,8 +1387,8 @@ class PlayState extends MusicBeatState
 		iconP2.alpha = 0;
 		scoreTxt.alpha = 0;
 
-		generateStaticArrows(0, true);
-		generateStaticArrows(1, true);
+		generateStaticArrows(0);
+		generateStaticArrows(1);
 
 		for(x in strumLineNotes.members){
 			x.alpha = 0;
@@ -1421,6 +1426,8 @@ class PlayState extends MusicBeatState
 
 	function startCountdown():Void
 	{
+
+		hudArrows = [];
 		inCutscene = false;
 
 		healthBar.visible = true;
@@ -1630,6 +1637,7 @@ class PlayState extends MusicBeatState
 		//for (section in noteData)
 		for (section in noteData)
 		{
+			var mn:Int = keyAmmo[mania]; //new var to determine max notes
 			if(sectionStart && daBeats < sectionStartPoint){
 				daBeats++;
 				continue;
@@ -1645,10 +1653,10 @@ class PlayState extends MusicBeatState
 
 				var gottaHitNote:Bool = section.mustHitSection;
 
-				if (songNotes[1] > 3)
-				{
-					gottaHitNote = !section.mustHitSection;
-				}
+				if (songNotes[1] % (mn * 2) >= mn)
+					{
+						gottaHitNote = !section.mustHitSection;
+					}
 
 				var oldNote:Note;
 				if (unspawnNotes.length > 0)
@@ -1712,138 +1720,134 @@ class PlayState extends MusicBeatState
 		return FlxSort.byValues(FlxSort.ASCENDING, Obj1[0], Obj2[0]);
 	}
 
-	private function generateStaticArrows(player:Int, ?instant:Bool = false):Void
-	{
-		for (i in 0...4)
+	private function generateStaticArrows(player:Int):Void
 		{
-			// FlxG.log.add(i);
-			var babyArrow:FlxSprite = new FlxSprite(50, strumLine.y);
-
-			switch (curStage)
-			{
-				case 'school' | 'schoolEvil':
-					babyArrow.loadGraphic(Paths.image('week6/weeb/pixelUI/arrows-pixels'), true, 19, 19);
-					babyArrow.animation.add('green', [6]);
-					babyArrow.animation.add('red', [7]);
-					babyArrow.animation.add('blue', [5]);
-					babyArrow.animation.add('purplel', [4]);
-
-					babyArrow.setGraphicSize(Std.int(babyArrow.width * daPixelZoom));
-					babyArrow.updateHitbox();
-					babyArrow.antialiasing = false;
-
-					switch (Math.abs(i))
-					{
-						case 2:
-							babyArrow.x += Note.swagWidth * 2;
-							babyArrow.animation.add('static', [2]);
-							babyArrow.animation.add('pressed', [26, 10], 12, false);
-							babyArrow.animation.add('confirm', [30, 14, 18], 24, false);
-						case 3:
-							babyArrow.x += Note.swagWidth * 3;
-							babyArrow.animation.add('static', [3]);
-							babyArrow.animation.add('pressed', [27, 11], 12, false);
-							babyArrow.animation.add('confirm', [31, 15, 19], 24, false);
-						case 1:
-							babyArrow.x += Note.swagWidth * 1;
-							babyArrow.animation.add('static', [1]);
-							babyArrow.animation.add('pressed', [25, 9], 12, false);
-							babyArrow.animation.add('confirm', [29, 13, 17], 24, false);
-						case 0:
-							babyArrow.x += Note.swagWidth * 0;
-							babyArrow.animation.add('static', [0]);
-							babyArrow.animation.add('pressed', [24, 8], 12, false);
-							babyArrow.animation.add('confirm', [28, 12, 16], 24, false);
-					}
-
-				default:
-					babyArrow.frames = Paths.getSparrowAtlas('ui/NOTE_assets');
-					babyArrow.animation.addByPrefix('green', 'arrowUP');
-					babyArrow.animation.addByPrefix('blue', 'arrowDOWN');
-					babyArrow.animation.addByPrefix('purple', 'arrowLEFT');
-					babyArrow.animation.addByPrefix('red', 'arrowRIGHT');
-
-					babyArrow.antialiasing = true;
-					babyArrow.setGraphicSize(Std.int(babyArrow.width * 0.7));
-
-					switch (Math.abs(i))
-					{
-						case 2:
-							babyArrow.x += Note.swagWidth * 2;
-							babyArrow.animation.addByPrefix('static', 'arrowUP');
-							babyArrow.animation.addByPrefix('pressed', 'up press', 24, false);
-							babyArrow.animation.addByPrefix('confirm', 'up confirm', 24, false);
-						case 3:
-							babyArrow.x += Note.swagWidth * 3;
-							babyArrow.animation.addByPrefix('static', 'arrowRIGHT');
-							babyArrow.animation.addByPrefix('pressed', 'right press', 24, false);
-							babyArrow.animation.addByPrefix('confirm', 'right confirm', 24, false);
-						case 1:
-							babyArrow.x += Note.swagWidth * 1;
-							babyArrow.animation.addByPrefix('static', 'arrowDOWN');
-							babyArrow.animation.addByPrefix('pressed', 'down press', 24, false);
-							babyArrow.animation.addByPrefix('confirm', 'down confirm', 24, false);
-						case 0:
-							babyArrow.x += Note.swagWidth * 0;
-							babyArrow.animation.addByPrefix('static', 'arrowLEFT');
-							babyArrow.animation.addByPrefix('pressed', 'left press', 24, false);
-							babyArrow.animation.addByPrefix('confirm', 'left confirm', 24, false);
-					}
-			}
-
-			babyArrow.updateHitbox();
-			babyArrow.scrollFactor.set();
-
-			if(!instant){
-				babyArrow.y -= 10;
-				babyArrow.alpha = 0;
-				FlxTween.tween(babyArrow, {y: babyArrow.y + 10, alpha: 1}, 1, {ease: FlxEase.circOut, startDelay: 0.5 + (0.2 * i)});
-			}
-
-			babyArrow.ID = i;
-
-			babyArrow.x += 50;
-
 			if (player == 1)
+				{
+					hudArrXPos = [];
+					hudArrYPos = [];
+				}
+			for (i in 0...keyAmmo[mania])
 			{
-				playerStrums.add(babyArrow);
-				babyArrow.animation.finishCallback = function(name:String){
-					if(autoplay){
-						if(name == "confirm"){
-							babyArrow.animation.play('static', true);
-							babyArrow.centerOffsets();
+				// FlxG.log.add(i);
+	
+				var babyArrow:FlxSprite = new FlxSprite(0, strumLine.y);
+	
+				switch (curStage)
+				{
+					case 'school' | 'schoolEvil':
+						babyArrow.loadGraphic(Paths.image('week6/weeb/pixelUI/arrows-pixels'), true, 17, 17);
+						babyArrow.animation.add('green', [6]);
+						babyArrow.animation.add('red', [7]);
+						babyArrow.animation.add('blue', [5]);
+						babyArrow.animation.add('purplel', [4]);
+	
+						babyArrow.setGraphicSize(Std.int(babyArrow.width * daPixelZoom));
+						babyArrow.updateHitbox();
+						babyArrow.antialiasing = false;
+	
+						switch (Math.abs(i))
+						{
+							case 0:
+								babyArrow.x += Note.swagWidth * 0;
+								babyArrow.animation.add('static', [0]);
+								babyArrow.animation.add('pressed', [4, 8], 12, false);
+								babyArrow.animation.add('confirm', [12, 16], 24, false);
+							case 1:
+								babyArrow.x += Note.swagWidth * 1;
+								babyArrow.animation.add('static', [1]);
+								babyArrow.animation.add('pressed', [5, 9], 12, false);
+								babyArrow.animation.add('confirm', [13, 17], 24, false);
+							case 2:
+								babyArrow.x += Note.swagWidth * 2;
+								babyArrow.animation.add('static', [2]);
+								babyArrow.animation.add('pressed', [6, 10], 12, false);
+								babyArrow.animation.add('confirm', [14, 18], 12, false);
+							case 3:
+								babyArrow.x += Note.swagWidth * 3;
+								babyArrow.animation.add('static', [3]);
+								babyArrow.animation.add('pressed', [7, 11], 12, false);
+								babyArrow.animation.add('confirm', [15, 19], 24, false);
+						}
+	
+					default:
+						babyArrow.frames = Paths.getSparrowAtlas('ui/NOTE_static');
+						babyArrow.animation.addByPrefix('green', 'arrowUP');
+						babyArrow.animation.addByPrefix('blue', 'arrowDOWN');
+						babyArrow.animation.addByPrefix('purple', 'arrowLEFT');
+						babyArrow.animation.addByPrefix('red', 'arrowRIGHT');
+	
+						babyArrow.antialiasing = true;
+						babyArrow.setGraphicSize(Std.int(babyArrow.width * Note.noteScale));
+	
+						var nSuf:Array<String> = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
+						var pPre:Array<String> = ['left', 'down', 'up', 'right'];
+						switch (mania)
+						{
+							case 1:
+								nSuf = ['LEFT', 'UP', 'RIGHT', 'LEFT', 'DOWN', 'RIGHT'];
+								pPre = ['left', 'up', 'right', 'yel', 'down', 'dark'];
+							case 2:
+								nSuf = ['LEFT', 'DOWN', 'UP', 'RIGHT', 'SPACE', 'LEFT', 'DOWN', 'UP', 'RIGHT'];
+								pPre = ['left', 'down', 'up', 'right', 'white', 'yel', 'violet', 'black', 'dark'];
+								babyArrow.x -= Note.tooMuch;
+						}
+						babyArrow.x += Note.swagWidth * i;
+						babyArrow.animation.addByPrefix('static', 'arrow' + nSuf[i]);
+						babyArrow.animation.addByPrefix('pressed', pPre[i] + ' press', 24, false);
+						babyArrow.animation.addByPrefix('confirm', pPre[i] + ' confirm', 24, false);
+				}
+	
+				babyArrow.updateHitbox();
+				babyArrow.scrollFactor.set();
+	
+				if (!isStoryMode)
+				{
+					babyArrow.y -= 10;
+					babyArrow.alpha = 0;
+					FlxTween.tween(babyArrow, {y: babyArrow.y + 10, alpha: 1}, 1, {ease: FlxEase.circOut, startDelay: 0.5 + (0.2 * i)});
+				}
+	
+				babyArrow.ID = i;
+	
+				babyArrow.animation.play('static');
+				babyArrow.x += 50;
+				babyArrow.x += ((FlxG.width / 2) * player);
+	
+			
+				if (player == 1)
+					{
+						hudArrXPos.push(babyArrow.x);
+						hudArrYPos.push(babyArrow.y);
+						playerStrums.add(babyArrow);
+						babyArrow.animation.finishCallback = function(name:String){
+							if(autoplay){
+								if(name == "confirm"){
+									babyArrow.animation.play('static', true);
+									babyArrow.centerOffsets();
+								}
+							}
+						}
+		
+					}
+					else
+					{
+						enemyStrums.add(babyArrow);
+						babyArrow.animation.finishCallback = function(name:String){
+							if(name == "confirm"){
+								babyArrow.animation.play('static', true);
+								babyArrow.centerOffsets();
+							}
+						}
+		
+						if(Config.centeredNotes){
+							babyArrow.x -= 1280;
 						}
 					}
-				}
-
-				if(!Config.centeredNotes){
-					babyArrow.x += ((FlxG.width / 2));
-				}
-				else{
-					babyArrow.x += ((FlxG.width / 4));
-				}
-
+	
+				strumLineNotes.add(babyArrow);
 			}
-			else
-			{
-				enemyStrums.add(babyArrow);
-				babyArrow.animation.finishCallback = function(name:String){
-					if(name == "confirm"){
-						babyArrow.animation.play('static', true);
-						babyArrow.centerOffsets();
-					}
-				}
-
-				if(Config.centeredNotes){
-					babyArrow.x -= 1280;
-				}
-			}
-
-			babyArrow.animation.play('static');
-
-			strumLineNotes.add(babyArrow);
 		}
-	}
 
 	override function openSubState(SubState:FlxSubState)
 	{
@@ -2311,17 +2315,100 @@ class PlayState extends MusicBeatState
 				//trace("DA ALT THO?: " + SONG.notes[Math.floor(curStep / 16)].altAnim);
 
 				if(dad.canAutoAnim && (Character.LOOP_ANIM_ON_HOLD ? true : !daNote.isSustainNote)){
-					switch (Math.abs(daNote.noteData))
-					{
-						case 2:
-							dad.playAnim('singUP' + altAnim, true);
-						case 3:
-							dad.playAnim('singRIGHT' + altAnim, true);
-						case 1:
-							dad.playAnim('singDOWN' + altAnim, true);
-						case 0:
-							dad.playAnim('singLEFT' + altAnim, true);
-					}
+					if (mania == 0)
+						{
+							switch (Math.abs(daNote.noteData))
+							{
+								case 2:
+									dad.playAnim('singUP' + altAnim, true);
+								case 3:
+									dad.playAnim('singRIGHT' + altAnim, true);
+								case 1:
+									dad.playAnim('singDOWN' + altAnim, true);
+								case 0:
+									dad.playAnim('singLEFT' + altAnim, true);
+							}
+						}
+						else if (mania == 1)
+						{
+							switch (Math.abs(daNote.noteData))
+							{
+								case 1:
+									dad.playAnim('singUP' + altAnim, true);
+								case 0:
+									dad.playAnim('singLEFT' + altAnim, true);
+								case 2:
+									dad.playAnim('singRIGHT' + altAnim, true);
+								case 3:
+									dad.playAnim('singLEFT' + altAnim, true);
+								case 4:
+									dad.playAnim('singDOWN' + altAnim, true);
+								case 5:
+									dad.playAnim('singRIGHT' + altAnim, true);
+							}
+						}
+						else
+						{
+							if (!exDad)
+							{
+								switch (Math.abs(daNote.noteData))
+								{
+									case 0:
+										dad.playAnim('singLEFT' + altAnim, true);
+									case 1:
+										dad.playAnim('singDOWN' + altAnim, true);
+									case 2:
+										dad.playAnim('singUP' + altAnim, true);
+									case 3:
+										dad.playAnim('singRIGHT' + altAnim, true);
+									case 4:
+										dad.playAnim('singUP' + altAnim, true);
+									case 5:
+										dad.playAnim('singLEFT' + altAnim, true);
+									case 6:
+										dad.playAnim('singDOWN' + altAnim, true);
+									case 7:
+										dad.playAnim('singUP' + altAnim, true);
+									case 8:
+										dad.playAnim('singRIGHT' + altAnim, true);
+								}
+							}
+							else
+							{
+								var targ:Character = dad;
+								var both:Bool = false;
+								if (daNote.dType == 0) targ = dad2;
+								else if (daNote.dType == 2)
+								{
+									if (daNote.noteData <= 3) targ = dad2;
+									if (daNote.noteData == 4) both = true;
+								}
+
+								switch (Math.abs(daNote.noteData))
+								{
+									case 0:
+										targ.playAnim('singLEFT' + altAnim, true);
+									case 1:
+										targ.playAnim('singDOWN' + altAnim, true);
+									case 2:
+										targ.playAnim('singUP' + altAnim, true);
+									case 3:
+										targ.playAnim('singRIGHT' + altAnim, true);
+									case 4:
+										targ.playAnim('singUP' + altAnim, true);
+
+										if (both) dad2.playAnim('singUP' + altAnim, true);
+									case 5:
+										targ.playAnim('singLEFT' + altAnim, true);
+									case 6:
+										targ.playAnim('singDOWN' + altAnim, true);
+									case 7:
+										targ.playAnim('singUP' + altAnim, true);
+									case 8:
+										targ.playAnim('singRIGHT' + altAnim, true);
+								}
+							}
+						}
 				}
 
 				enemyStrums.forEach(function(spr:FlxSprite)
@@ -2352,6 +2439,9 @@ class PlayState extends MusicBeatState
 		});
 	}
 
+	var exDad:Bool = false;
+	private var dad2:Character;
+
 	public function endSong():Void
 	{
 		canPause = false;
@@ -2368,6 +2458,21 @@ class PlayState extends MusicBeatState
 			campaignScore += songScore;
 
 			storyPlaylist.remove(storyPlaylist[0]);
+
+			new FlxTimer().start(0.003, function(fadear:FlxTimer)
+				{
+					var decAl:Float = 0.01;
+					for (i in 0...hudArrows.length)
+					{
+						hudArrows[i].alpha -= decAl;
+					}
+					healthBarBG.alpha -= decAl;
+					healthBar.alpha -= decAl;
+					iconP1.alpha -= decAl;
+					iconP2.alpha -= decAl;
+					scoreTxt.alpha -= decAl;
+					fadear.reset(0.003);
+				});
 
 			if (storyPlaylist.length <= 0)
 			{
@@ -2552,10 +2657,112 @@ class PlayState extends MusicBeatState
 
 	}
 
+		var l1Hold:Bool = false;
+		var uHold:Bool = false;
+		var r1Hold:Bool = false;
+		var l2Hold:Bool = false;
+		var dHold:Bool = false;
+		var r2Hold:Bool = false;
+
+		var n0Hold:Bool = false;
+		var n1Hold:Bool = false;
+		var n2Hold:Bool = false;
+		var n3Hold:Bool = false;
+		var n4Hold:Bool = false;
+		var n5Hold:Bool = false;
+		var n6Hold:Bool = false;
+		var n7Hold:Bool = false;
+		var n8Hold:Bool = false;
+
+		var reachBeat:Float;
+
+		public static var loadRep:Bool = false;
+
 	private function keyShit():Void
 	{
 
+		// HOLDING
+		var up = controls.UP;
+		var right = controls.RIGHT;
+		var down = controls.DOWN;
+		var left = controls.LEFT;
+
+		var upP = controls.UP_P;
+		var rightP = controls.RIGHT_P;
+		var downP = controls.DOWN_P;
+		var leftP = controls.LEFT_P;
+
+		var upR = controls.UP_R;
+		var rightR = controls.RIGHT_R;
+		var downR = controls.DOWN_R;
+		var leftR = controls.LEFT_R;
+
+		var l1 = controls.L1;
+		var u = controls.U1;
+		var r1 = controls.R1;
+		var l2 = controls.L2;
+		var d = controls.D1;
+		var r2 = controls.R2;
+
+		var l1P = controls.L1_P;
+		var uP = controls.U1_P;
+		var r1P = controls.R1_P;
+		var l2P = controls.L2_P;
+		var dP = controls.D1_P;
+		var r2P = controls.R2_P;
+
+		var l1R = controls.L1_R;
+		var uR = controls.U1_R;
+		var r1R = controls.R1_R;
+		var l2R = controls.L2_R;
+		var dR = controls.D1_R;
+		var r2R = controls.R2_R;
+
+
+		var n0 = controls.N0;
+		var n1 = controls.N1;
+		var n2 = controls.N2;
+		var n3 = controls.N3;
+		var n4 = controls.N4;
+		var n5 = controls.N5;
+		var n6 = controls.N6;
+		var n7 = controls.N7;
+		var n8 = controls.N8;
+
+		var n0P = controls.N0_P;
+		var n1P = controls.N1_P;
+		var n2P = controls.N2_P;
+		var n3P = controls.N3_P;
+		var n4P = controls.N4_P;
+		var n5P = controls.N5_P;
+		var n6P = controls.N6_P;
+		var n7P = controls.N7_P;
+		var n8P = controls.N8_P;
+
+		var n0R = controls.N0_R;
+		var n1R = controls.N1_R;
+		var n2R = controls.N2_R;
+		var n3R = controls.N3_R;
+		var n4R = controls.N4_R;
+		var n5R = controls.N5_R;
+		var n6R = controls.N6_R;
+		var n7R = controls.N7_R;
+		var n8R = controls.N8_R;
+
 		var controlArray:Array<Bool> = [leftPress, downPress, upPress, rightPress];
+
+		// FlxG.watch.addQuick('asdfa', upP);
+		var ankey = (upPress || rightPress || downPress || leftPress);
+		if (mania == 1)
+		{ 
+			ankey = (l1P || uP || r1P || l2P || dP || r2P);
+			controlArray = [l1P, uP, r1P, l2P, dP, r2P];
+		}
+		else if (mania == 2)
+		{
+			ankey = (n0P || n1P || n2P || n3P || n4P || n5P || n6P || n7P || n8P);
+			controlArray = [n0P, n1P, n2P, n3P, n4P, n5P, n6P, n7P, n8P];
+		}
 
 		if ((upPress || rightPress || downPress || leftPress) && generatedMusic)
 		{
@@ -2565,22 +2772,92 @@ class PlayState extends MusicBeatState
 
 			var ignoreList:Array<Int> = [];
 
-			notes.forEachAlive(function(daNote:Note)
+			var condition = ((up || right || down || left) && generatedMusic || (upHold || downHold || leftHold || rightHold) && loadRep && generatedMusic);
+			if (mania == 1)
 			{
-				if (daNote.canBeHit && daNote.mustPress && !daNote.tooLate)
-				{
-					// the sorting probably doesn't need to be in here? who cares lol
-					possibleNotes.push(daNote);
-					possibleNotes.sort((a, b) -> Std.int(a.strumTime - b.strumTime));
+				condition = ((l1 || u || r1 || l2 || d || r2) && generatedMusic || (l1Hold || uHold || r1Hold || l2Hold || dHold || r2Hold) && loadRep && generatedMusic);
+			}
+			else if (mania == 2)
+			{
+				condition = ((n0 || n1 || n2 || n3 || n4 || n5 || n6 || n7 || n8) && generatedMusic || (n0Hold || n1Hold || n2Hold || n3Hold || n4Hold || n5Hold || n6Hold || n7Hold || n8Hold) && loadRep && generatedMusic);
+			}
+			if (condition){
+				notes.forEachAlive(function(daNote:Note)
+					{
+						if (daNote.canBeHit && daNote.mustPress && daNote.isSustainNote)
+						{
+							// the sorting probably doesn't need to be in here? who cares lol
+							possibleNotes.push(daNote);
+							possibleNotes.sort((a, b) -> Std.int(a.strumTime - b.strumTime));
 
-					ignoreList.push(daNote.noteData);
+							ignoreList.push(daNote.noteData);
 
-					if(Config.ghostTapType == 1){
-						setCanMiss();
-					}
-				}
-
-			});
+							if(Config.ghostTapType == 1){
+								setCanMiss();
+							}
+							if (mania == 0)
+							{
+								switch (daNote.noteData)
+								{
+									// NOTES YOU ARE HOLDING
+									case 2:
+										if (up || upHold)
+											goodNoteHit(daNote);
+									case 3:
+										if (right || rightHold)
+											goodNoteHit(daNote);
+									case 1:
+										if (down || downHold)
+											goodNoteHit(daNote);
+									case 0:
+										if (left || leftHold)
+											goodNoteHit(daNote);
+								}
+							}
+							else if (mania == 1)
+							{
+								switch (daNote.noteData)
+								{
+									// NOTES YOU ARE HOLDING
+									case 0:
+										if (l1 || l1Hold)
+											goodNoteHit(daNote);
+									case 1:
+										if (u || uHold)
+											goodNoteHit(daNote);
+									case 2:
+										if (r1 || r1Hold)
+											goodNoteHit(daNote);
+									case 3:
+										if (l2 || l2Hold)
+											goodNoteHit(daNote);
+									case 4:
+										if (d || dHold)
+											goodNoteHit(daNote);
+									case 5:
+										if (r2 || r2Hold)
+											goodNoteHit(daNote);
+								}
+							}
+							else
+							{
+								switch (daNote.noteData)
+								{
+									// NOTES YOU ARE HOLDING
+									case 0: if (n0 || n0Hold) goodNoteHit(daNote);
+									case 1: if (n1 || n1Hold) goodNoteHit(daNote);
+									case 2: if (n2 || n2Hold) goodNoteHit(daNote);
+									case 3: if (n3 || n3Hold) goodNoteHit(daNote);
+									case 4: if (n4 || n4Hold) goodNoteHit(daNote);
+									case 5: if (n5 || n5Hold) goodNoteHit(daNote);
+									case 6: if (n6 || n6Hold) goodNoteHit(daNote);
+									case 7: if (n7 || n7Hold) goodNoteHit(daNote);
+									case 8: if (n8 || n8Hold) goodNoteHit(daNote);
+								}
+							}
+						}
+					});
+			}
 
 			var directionsAccounted = [false,false,false,false];
 
@@ -2591,11 +2868,7 @@ class PlayState extends MusicBeatState
 						directionsAccounted[note.noteData] = true;
 					}
 				}
-				for(i in 0...4){
-					if(!ignoreList.contains(i) && controlArray[i]){
-						badNoteCheck(i);
-					}
-				}
+				badNoteCheck();
 			}
 			else{
 				badNoteCheck();
@@ -2689,55 +2962,152 @@ class PlayState extends MusicBeatState
 		}
 
 		playerStrums.forEach(function(spr:FlxSprite)
-		{
-			switch (spr.ID)
 			{
-				case 2:
-					if (upPress && spr.animation.curAnim.name != 'confirm')
-						spr.animation.play('pressed');
-					if (!upHold)
-						spr.animation.play('static');
-				case 3:
-					if (rightPress && spr.animation.curAnim.name != 'confirm')
-						spr.animation.play('pressed');
-					if (!rightHold)
-						spr.animation.play('static');
-				case 1:
-					if (downPress && spr.animation.curAnim.name != 'confirm')
-						spr.animation.play('pressed');
-					if (!downHold)
-						spr.animation.play('static');
-				case 0:
-					if (leftPress && spr.animation.curAnim.name != 'confirm')
-						spr.animation.play('pressed');
-					if (!leftHold)
-						spr.animation.play('static');
-			}
-
-			switch(spr.animation.curAnim.name){
-
-				case "confirm":
-
-					//spr.alpha = 1;
-					spr.centerOffsets();
-
-					if(!curStage.startsWith('school')){
-						spr.offset.x -= 14;
-						spr.offset.y -= 14;
+				if (mania == 0)
+				{
+					switch (spr.ID)
+					{
+						case 2:
+							if (upP && spr.animation.curAnim.name != 'confirm')
+							{
+								spr.animation.play('pressed');
+								trace('play');
+							}
+							if (upR)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 3:
+							if (rightP && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (rightR)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 1:
+							if (downP && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (downR)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 0:
+							if (leftP && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (leftR)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
 					}
-
-				/*case "static":
-					spr.alpha = 0.5; //Might mess around with strum transparency in the future or something.
-					spr.centerOffsets();*/
-
-				default:
-					//spr.alpha = 1;
+				}
+				else if (mania == 1)
+				{
+					switch (spr.ID)
+					{
+						case 0:
+							if (l1P && spr.animation.curAnim.name != 'confirm')
+							{
+								spr.animation.play('pressed');
+								trace('play');
+							}
+							if (l1R)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 1:
+							if (uP && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (uR)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 2:
+							if (r1P && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (r1R)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 3:
+							if (l2P && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (l2R)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 4:
+							if (dP && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (dR)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+						case 5:
+							if (r2P && spr.animation.curAnim.name != 'confirm')
+								spr.animation.play('pressed');
+							if (r2R)
+							{
+								spr.animation.play('static');
+								repReleases++;
+							}
+					}
+				}
+				else if (mania == 2)
+				{
+					switch (spr.ID)
+					{
+						case 0:
+							if (n0P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n0R) spr.animation.play('static');
+						case 1:
+							if (n1P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n1R) spr.animation.play('static');
+						case 2:
+							if (n2P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n2R) spr.animation.play('static');
+						case 3:
+							if (n3P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n3R) spr.animation.play('static');
+						case 4:
+							if (n4P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n4R) spr.animation.play('static');
+						case 5:
+							if (n5P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n5R) spr.animation.play('static');
+						case 6:
+							if (n6P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n6R) spr.animation.play('static');
+						case 7:
+							if (n7P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n7R) spr.animation.play('static');
+						case 8:
+							if (n8P && spr.animation.curAnim.name != 'confirm') spr.animation.play('pressed');
+							if (n8R) spr.animation.play('static');
+					}
+				}
+				
+				if (spr.animation.curAnim.name == 'confirm' && !curStage.startsWith('school'))
+				{
 					spr.centerOffsets();
-
-			}
-
-		});
+					spr.offset.x -= 13;
+					spr.offset.y -= 13;
+				}
+				else
+					spr.centerOffsets();
+			});
 	}
+
+	public static var repPresses:Int = 0;
+	public static var repReleases:Int = 0;
 
 	private function keyShitAuto():Void
 	{
@@ -2765,33 +3135,23 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		for(x in hitNotes){
-
-			boyfriend.holdTimer = 0;
-
-			goodNoteHit(x);
-			
-			playerStrums.forEach(function(spr:FlxSprite)
+		playerStrums.forEach(function(spr:FlxSprite)
 			{
-				if (Math.abs(x.noteData) == spr.ID)
+				spr.x = hudArrXPos[spr.ID];//spr.offset.set(spr.frameWidth / 2, spr.frameHeight / 2);
+				spr.y = hudArrYPos[spr.ID];
+				if (spr.animation.curAnim.name == 'confirm')
 				{
-					spr.animation.play('confirm', true);
-					if (spr.animation.curAnim.name == 'confirm' && !curStage.startsWith('school'))
-					{
-						spr.centerOffsets();
-						spr.offset.x -= 14;
-						spr.offset.y -= 14;
-					}
-					else
-						spr.centerOffsets();
+					var jj:Array<Float> = [0, 3, 9];
+					spr.x = hudArrXPos[spr.ID] + jj[mania];
+					spr.y = hudArrYPos[spr.ID] + jj[mania];
 				}
 			});
 
-		}
-
 		
 	}
-
+	var hudArrows:Array<FlxSprite>;
+	var hudArrXPos:Array<Float>;
+	var hudArrYPos:Array<Float>;
 	function noteMiss(direction:Int = 1, ?healthLoss:Float = 0.04, ?playAudio:Bool = true, ?skipInvCheck:Bool = false, ?countMiss:Bool = true, ?dropCombo:Bool = true, ?invulnTime:Int = 5, ?scoreAdjust:Int = 100):Void
 	{
 		if (!startingSong && (!invuln || skipInvCheck) )
@@ -2821,16 +3181,26 @@ class PlayState extends MusicBeatState
 
 			if(boyfriend.canAutoAnim){
 				switch (direction)
-				{
-					case 2:
-						boyfriend.playAnim('singUPmiss', true);
-					case 3:
-						boyfriend.playAnim('singRIGHTmiss', true);
-					case 1:
-						boyfriend.playAnim('singDOWNmiss', true);
-					case 0:
-						boyfriend.playAnim('singLEFTmiss', true);
-				}
+			{
+				case 0:
+					boyfriend.playAnim('singLEFTmiss', true);
+				case 1:
+					boyfriend.playAnim('singDOWNmiss', true);
+				case 2:
+					boyfriend.playAnim('singUPmiss', true);
+				case 3:
+					boyfriend.playAnim('singRIGHTmiss', true);
+				case 4:
+					boyfriend.playAnim('singDOWNmiss', true);
+				case 5:
+					boyfriend.playAnim('singRIGHTmiss', true);
+				case 6:
+					boyfriend.playAnim('singDOWNmiss', true);
+				case 7:
+					boyfriend.playAnim('singUPmiss', true);
+				case 8:
+					boyfriend.playAnim('singRIGHTmiss', true);
+			}
 			}
 
 			updateAccuracy();
@@ -2844,20 +3214,72 @@ class PlayState extends MusicBeatState
 		noteMiss(direction, healthLoss, true, false, false, false, 4, 25);
 	}
 
-	function badNoteCheck(direction:Int = -1)
-	{
-		if(Config.ghostTapType > 0 && !canHit){}
-		else{
-			if (leftPress && (direction == -1 || direction == 0))
-				noteMissWrongPress(0);
-			if (upPress && (direction == -1 || direction == 2))
-				noteMissWrongPress(2);
-			if (rightPress && (direction == -1 || direction == 3))
-				noteMissWrongPress(3);
-			if (downPress && (direction == -1 || direction == 1))
-				noteMissWrongPress(1);
+	function badNoteCheck()
+		{
+			// just double pasting this shit cuz fuk u
+			// REDO THIS SYSTEM!
+			var upP = controls.UP_P;
+			var rightP = controls.RIGHT_P;
+			var downP = controls.DOWN_P;
+			var leftP = controls.LEFT_P;
+
+			var l1P = controls.L1_P;
+			var uP = controls.U1_P;
+			var r1P = controls.R1_P;
+			var l2P = controls.L2_P;
+			var dP = controls.D1_P;
+			var r2P = controls.R2_P;
+
+			var n0P = controls.N0_P;
+			var n1P = controls.N1_P;
+			var n2P = controls.N2_P;
+			var n3P = controls.N3_P;
+			var n4P = controls.N4_P;
+			var n5P = controls.N5_P;
+			var n6P = controls.N6_P;
+			var n7P = controls.N7_P;
+			var n8P = controls.N8_P;
+			
+			if (mania == 0)
+			{
+				if (leftP)
+					noteMiss(0);
+				if (upP)
+					noteMiss(2);
+				if (rightP)
+					noteMiss(3);
+				if (downP)
+					noteMiss(1);
+			}
+			else if (mania == 1)
+			{
+				if (l1P)
+					noteMiss(0);
+				else if (uP)
+					noteMiss(1);
+				else if (r1P)
+					noteMiss(2);
+				else if (l2P)
+					noteMiss(3);
+				else if (dP)
+					noteMiss(4);
+				else if (r2P)
+					noteMiss(5);
+			}
+			else
+			{
+				if (n0P) noteMiss(0);
+				if (n1P) noteMiss(1);
+				if (n2P) noteMiss(2);
+				if (n3P) noteMiss(3);
+				if (n4P) noteMiss(4);
+				if (n5P) noteMiss(5);
+				if (n6P) noteMiss(6);
+				if (n7P) noteMiss(7);
+				if (n8P) noteMiss(8);
+			}
+			updateAccuracy();
 		}
-	}
 
 	function setBoyfriendInvuln(time:Float = 5 / 60){
 		if(time > invulnTime){
@@ -2899,62 +3321,46 @@ class PlayState extends MusicBeatState
 			updateAccuracy();
 		}
 
-		else if (!note.wasGoodHit)
+		if (!note.wasGoodHit)
 		{
-			if (!note.isSustainNote){
-				popUpScore(note);
-				combo += 1;
-			}
-			else{
-				totalNotesHit += 1;
-			}
-				
+						if (!note.isSustainNote)
+						{
+							popUpScore(note);
+							combo += 1;
+						}
+						else
+							totalNotesHit += 1;
+		
+						var sDir:Array<String> = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
+						if (mania == 1)
+						{
+							sDir = ['LEFT', 'UP', 'RIGHT', 'LEFT', 'DOWN', 'RIGHT'];
+						}
+						else if (mania == 2)
+						{
+							sDir = ['LEFT', 'DOWN', 'UP', 'RIGHT', 'UP', 'LEFT', 'DOWN', 'UP', 'RIGHT'];
+						}
 
-			if (!note.isSustainNote){
-				health += 0.015 * Config.healthMultiplier;
-			}
-			else{
-				health += 0.0075 * Config.healthMultiplier;
-			}
-
-			health += 0.015 * Config.healthMultiplier;
-				
-			if(boyfriend.canAutoAnim && (Character.LOOP_ANIM_ON_HOLD ? true : !note.isSustainNote)){
-				switch (note.noteData)
-				{
-					case 2:
-						boyfriend.playAnim('singUP', true);
-					case 3:
-						boyfriend.playAnim('singRIGHT', true);
-					case 1:
-						boyfriend.playAnim('singDOWN', true);
-					case 0:
-						boyfriend.playAnim('singLEFT', true);
-				}
-			}
-
-			if(!note.isSustainNote){
-				setBoyfriendInvuln(2.5 / 60);
-			}
+						boyfriend.playAnim('sing' + sDir[note.noteData], true);
 			
-
-			playerStrums.forEach(function(spr:FlxSprite)
-			{
-				if (Math.abs(note.noteData) == spr.ID)
-				{
-					spr.animation.play('confirm', true);
-				}
-			});
-
-			note.wasGoodHit = true;
-			vocals.volume = 1;
-
-			if(!note.isSustainNote){
-				note.destroy();
-			}
+						playerStrums.forEach(function(spr:FlxSprite)
+						{
+							if (Math.abs(note.noteData) == spr.ID)
+							{
+								spr.animation.play('confirm', true);
+							}
+							//spr.updateHitbox();
+						});
 			
-			updateAccuracy();
-		}
+						note.wasGoodHit = true;
+						vocals.volume = 1;
+			
+						note.kill();
+						notes.remove(note, true);
+						note.destroy();
+						
+						updateAccuracy();
+				}
 	}
 
 	var fastCarCanDrive:Bool = true;

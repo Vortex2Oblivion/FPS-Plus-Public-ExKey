@@ -14,6 +14,8 @@ class Main extends Sprite
 	public static var novid:Bool = false;
 	public static var flippymode:Bool = false;
 
+	public static var keyAmmo:Array<Int> = [4, 6, 9];
+
 	public function new()
 	{
 		super();
